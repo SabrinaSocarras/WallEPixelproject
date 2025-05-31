@@ -30,6 +30,7 @@
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(PixelWallE));
             this.panel1 = new System.Windows.Forms.Panel();
+            this.richTextBox1 = new System.Windows.Forms.RichTextBox();
             this.pbCanvas = new System.Windows.Forms.PictureBox();
             this.numTamanioCanvas = new System.Windows.Forms.NumericUpDown();
             this.button4 = new System.Windows.Forms.Button();
@@ -43,8 +44,10 @@
             // 
             // panel1
             // 
+            this.panel1.AutoSize = true;
             this.panel1.BackColor = System.Drawing.Color.Black;
             this.panel1.BackgroundImage = ((System.Drawing.Image)(resources.GetObject("panel1.BackgroundImage")));
+            this.panel1.Controls.Add(this.richTextBox1);
             this.panel1.Controls.Add(this.pbCanvas);
             this.panel1.Controls.Add(this.numTamanioCanvas);
             this.panel1.Controls.Add(this.button4);
@@ -56,7 +59,14 @@
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(1292, 706);
             this.panel1.TabIndex = 0;
-            this.panel1.Paint += new System.Windows.Forms.PaintEventHandler(this.panel1_Paint);
+            // 
+            // richTextBox1
+            // 
+            this.richTextBox1.Location = new System.Drawing.Point(1000, 92);
+            this.richTextBox1.Name = "richTextBox1";
+            this.richTextBox1.Size = new System.Drawing.Size(249, 172);
+            this.richTextBox1.TabIndex = 5;
+            this.richTextBox1.Text = "";
             // 
             // pbCanvas
             // 
@@ -90,6 +100,7 @@
             0,
             0,
             0});
+            this.numTamanioCanvas.ValueChanged += new System.EventHandler(this.numTamanioCanvas_ValueChanged_1);
             // 
             // button4
             // 
@@ -97,7 +108,7 @@
             this.button4.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button4.Font = new System.Drawing.Font("Showcard Gothic", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.button4.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
-            this.button4.Location = new System.Drawing.Point(379, 33);
+            this.button4.Location = new System.Drawing.Point(590, 27);
             this.button4.Name = "button4";
             this.button4.Size = new System.Drawing.Size(113, 44);
             this.button4.TabIndex = 3;
@@ -111,7 +122,7 @@
             this.button3.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button3.Font = new System.Drawing.Font("Showcard Gothic", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.button3.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
-            this.button3.Location = new System.Drawing.Point(518, 33);
+            this.button3.Location = new System.Drawing.Point(727, 27);
             this.button3.Name = "button3";
             this.button3.Size = new System.Drawing.Size(118, 44);
             this.button3.TabIndex = 2;
@@ -125,7 +136,7 @@
             this.button2.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button2.Font = new System.Drawing.Font("Showcard Gothic", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.button2.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
-            this.button2.Location = new System.Drawing.Point(657, 33);
+            this.button2.Location = new System.Drawing.Point(871, 27);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(117, 44);
             this.button2.TabIndex = 1;
@@ -139,7 +150,7 @@
             this.button1.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button1.Font = new System.Drawing.Font("Showcard Gothic", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.button1.ForeColor = System.Drawing.SystemColors.ButtonHighlight;
-            this.button1.Location = new System.Drawing.Point(800, 33);
+            this.button1.Location = new System.Drawing.Point(1023, 27);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(134, 44);
             this.button1.TabIndex = 0;
@@ -161,6 +172,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.pbCanvas)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.numTamanioCanvas)).EndInit();
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
@@ -173,5 +185,6 @@
         private System.Windows.Forms.Button button2;
         private System.Windows.Forms.NumericUpDown numTamanioCanvas;
         private System.Windows.Forms.PictureBox pbCanvas;
+        private System.Windows.Forms.RichTextBox richTextBox1;
     }
 }

@@ -47,6 +47,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CanvasManager.cs" />
+    <Compile Include="WallE.cs" />
     <Compile Include="PixelWallE.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -59,9 +61,6 @@
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
-    </Compile>
-    <Compile Include="RoundedPictureBox.cs">
-      <SubType>Component</SubType>
     </Compile>
     <EmbeddedResource Include="PixelWallE.resx">
       <DependentUpon>PixelWallE.cs</DependentUpon>
