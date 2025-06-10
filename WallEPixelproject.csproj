@@ -47,7 +47,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CanvasManager.cs" />
+    <Compile Include="Lexer.cs" />
+    <Compile Include="TextBoxLogger.cs" />
+    <Compile Include="Interfaces\ILogger.cs" />
+    <Compile Include="Token.cs" />
+    <Compile Include="enums\TokenType.cs" />
+    <Compile Include="Parser.cs" />
     <Compile Include="WallE.cs" />
     <Compile Include="PixelWallE.cs">
       <SubType>Form</SubType>
@@ -92,5 +97,6 @@
   <ItemGroup>
     <None Include="Resources\freepik__a-digital-painting-of-walle-as-a-street-artist-in-__733661.jpeg" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
