@@ -10,6 +10,7 @@ using System.Runtime.Remoting.Contexts;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using WallEPixelproject.AST;
 using WallEPixelproject.Interfaces;
 using static System.Windows.Forms.LinkLabel;
 
@@ -17,51 +18,65 @@ namespace WallEPixelproject
 {
     public partial class PixelWallE : Form
     {
-        private const int DISPLAY_PHYSICAL_WIDTH = 500; 
+        private const int DISPLAY_PHYSICAL_WIDTH = 500;
         private const int DISPLAY_PHYSICAL_HEIGHT = 500;
+
 
         private WallE _wallE;
         private Bitmap displayBitmap;
         private int pixeldivisor;
+        private Image WallEImage;
 
         private ILogger _appLogger;
 
+        private System.Windows.Forms.Panel lineNumberPanel;
 
         public PixelWallE()
         {
             InitializeComponent();
 
             _appLogger = new TextBoxLogger(this.logText);
-           
+
+            try
+            {
+                WallEImage = Properties.Resources.walle_icon;
+
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"No se pudo cargar la imagen de Wall-E desde recursos: {ex.Message}");
+                WallEImage = null;
+            }
+
             _wallE = new WallE(500, 500);
-            pixeldivisor = 50;
+            pixeldivisor = 25;
             ReinitializeCanvasAndLogic();
         }
-               
-         
+
+
         // Este método se llama al inicio y cuando el _pixelDivisor cambia
         private void ReinitializeCanvasAndLogic()
         {
             _appLogger?.Info("UI", $"Reinicializando. Divisor actual: {pixeldivisor}");
 
-            // 1. Calcular dimensiones lógicas
+
             int logicalWidth = DISPLAY_PHYSICAL_WIDTH / pixeldivisor;
             int logicalHeight = DISPLAY_PHYSICAL_HEIGHT / pixeldivisor;
-            logicalWidth = Math.Max(1, logicalWidth); // Evitar cero
+            logicalWidth = Math.Max(1, logicalWidth);
             logicalHeight = Math.Max(1, logicalHeight);
 
-            // 2. Crear/Redimensionar el contexto lógico de WallE
-            if (_wallE== null)
+
+            if (_wallE == null)
             {
-                _wallE= new WallE(logicalWidth, logicalHeight /*, _appLogger */); // Pasar logger a WallE
+                _wallE = new WallE(logicalWidth, logicalHeight, _appLogger);
                 _wallE.CanvasUpdated += OnWallELogicCanvasUpdated;
             }
             else
             {
-                _wallE.ResizeCanvas(logicalWidth, logicalHeight); // El ResizeCanvas de WallE debe limpiar y llamar a su OnCanvasUpdated
+                _wallE.ResizeCanvas(logicalWidth, logicalHeight);
             }
 
-            // 3. Crear/Asegurar el displayBitmap con tamaño físico fijo
+
             if (displayBitmap == null || displayBitmap.Width != DISPLAY_PHYSICAL_WIDTH || displayBitmap.Height != DISPLAY_PHYSICAL_HEIGHT)
             {
                 if (displayBitmap != null) displayBitmap.Dispose();
@@ -69,8 +84,7 @@ namespace WallEPixelproject
                 pbCanvas.Image = displayBitmap;
             }
 
-            // 4. Renderizar (ResizeCanvas en WallE debería haber llamado a OnCanvasUpdated, que llama a Render)
-            // Pero una llamada explícita aquí asegura el renderizado inicial si OnCanvasUpdated no se disparó aún.
+
             RenderLogicalContextToDisplayBitmap();
         }
 
@@ -90,16 +104,16 @@ namespace WallEPixelproject
                 g.Clear(Color.White); // Limpiar el bitmap físico
 
                 // Dibujar los píxeles lógicos
-                for (int lx = 0; lx < _wallE.CanvasWidth; lx++) // Usa LogicalCanvasWidth de WallE
+                for (int lx = 0; lx < _wallE.CanvasWidth; lx++)
                 {
-                    for (int ly = 0; ly < _wallE.CanvasHeight; ly++) // Usa LogicalCanvasHeight de WallE
+                    for (int ly = 0; ly < _wallE.CanvasHeight; ly++)
                     {
                         Color pixelColor = _wallE.GetPixelColorForUI(lx, ly);
-                        if (pixelColor == Color.Transparent) continue; // No pintar transparente
+                        if (pixelColor == Color.Transparent) continue;
 
                         using (SolidBrush brush = new SolidBrush(pixelColor))
                         {
-                            // Coordenadas en el bitmap físico
+
                             int screenX = lx * visualCellSize;
                             int screenY = ly * visualCellSize;
                             g.FillRectangle(brush, screenX, screenY, visualCellSize, visualCellSize);
@@ -108,7 +122,7 @@ namespace WallEPixelproject
                 }
 
                 // Dibujar la cuadrícula
-                if (visualCellSize > 2) // Solo si las celdas son visibles
+                if (visualCellSize > 2)
                 {
                     using (Pen gridPen = new Pen(Color.LightGray))
                     {
@@ -129,205 +143,261 @@ namespace WallEPixelproject
                         }
                     }
                 }
-            }
-            pbCanvas.Invalidate(); // Actualizar el PictureBox
-        }
-        private void richTextBox1_Paint(object sender, PaintEventArgs e)
-            {
-                // Dibuja números de línea en el RichTextBox
-                RichTextBox rtb = (RichTextBox)sender;
-                int lineHeight = (int)e.Graphics.MeasureString("X", rtb.Font).Height;
-                int firstLine = rtb.GetCharIndexFromPosition(new Point(0, 0));
-                int firstLineY = rtb.GetPositionFromCharIndex(firstLine).Y;
 
-                for (int i = 1; i <= rtb.Lines.Length; i++)
+                if (WallEImage != null) // Solo dibujar si la imagen se cargó correctamente
                 {
-                    int lineY = firstLineY + (i - 1) * lineHeight;
-                    e.Graphics.DrawString(i.ToString(), rtb.Font, Brushes.Gray, 5, lineY);
+                    // Coordenadas lógicas de Wall-E
+                    int wallELogicalX = _wallE.X;
+                    int wallELogicalY = _wallE.Y;
+
+                    // Convertir a coordenadas de pantalla para la esquina superior izquierda del ícono
+                    int wallEScreenX = wallELogicalX * visualCellSize;
+                    int wallEScreenY = wallELogicalY * visualCellSize;
+
+                    Rectangle destRect = new Rectangle(wallEScreenX, wallEScreenY, visualCellSize, visualCellSize);
+
+                    if (wallEScreenX >= 0 && wallEScreenX < DISPLAY_PHYSICAL_WIDTH &&
+                       wallEScreenY >= 0 && wallEScreenY < DISPLAY_PHYSICAL_HEIGHT)
+                    {
+                        g.DrawImage(WallEImage, destRect);
+                        _appLogger?.Debug("Render", $"Imagen de Wall-E dibujada en ({wallEScreenX},{wallEScreenY}) tamaño ({visualCellSize}x{visualCellSize})");
+                    }
                 }
+                pbCanvas.Invalidate();
             }
+        }
 
+        private void richTextBox1_TextChanged(object sender, EventArgs e)
+        {
+            lineNumberPanel.Invalidate();
+        }
 
+        private void richTextBox1_VScroll(object sender, EventArgs e)
+        {
+            lineNumberPanel.Invalidate();
+            this.Update();
+        }
+
+        private void lineNumberPanel_Paint(object sender, PaintEventArgs e)
+        {
+            Font font = richTextBox1.Font;
+            int lineHeight = (int)e.Graphics.MeasureString("X", font).Height;
+
+            int firstIndex = richTextBox1.GetCharIndexFromPosition(new Point(0, 0));
+            int firstLine = richTextBox1.GetLineFromCharIndex(firstIndex);
+
+            Point firstPos = richTextBox1.GetPositionFromCharIndex(firstIndex);
+
+            e.Graphics.Clear(lineNumberPanel.BackColor);
+
+            for (int i = 0; i < (richTextBox1.Height / lineHeight) + 1; i++)
+            {
+                int lineNum = firstLine + i;
+                if (lineNum >= richTextBox1.Lines.Length) break;
+
+                string lineNumber = (lineNum + 1).ToString();
+                float yPos = firstPos.Y + (i * lineHeight);
+
+                float textHeight = e.Graphics.MeasureString(lineNumber, font).Height;
+                float y = yPos + (lineHeight - textHeight) / 2;
+
+                e.Graphics.DrawString(
+                    lineNumber,
+                    font,
+                    Brushes.Black,
+                    new PointF(lineNumberPanel.Width - e.Graphics.MeasureString(lineNumber, font).Width - 5, y)
+                );
+            }
+        }
 
         private void btnEjecutar_Click(object sender, EventArgs e)
         {
             if (_wallE == null)
             {
-                _appLogger?.Error("TestExecution", "WallE (Contexto Lógico) no inicializado.", null);
-                MessageBox.Show("Error: El contexto lógico de WallE no está inicializado.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                _appLogger?.Error("Execution", "WallE no está inicializado", null);
+                MessageBox.Show("Error: WallE no está inicializado", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
-            _appLogger?.Info("TestExecution", "--- Iniciando Prueba Manual de DrawLine ---");
+            string source = richTextBox1.Text;
 
-            _wallE.ClearCanvasToWhite(); // Limpia y redibuja
-
-            try
+            // 1. Validar si hay código para procesar
+            if (string.IsNullOrWhiteSpace(source))
             {
-                int spawnX = 0;
-                int spawnY = 0;
-                _wallE.Spawn(spawnX, spawnY); // Usa CmdSpawn
-                _appLogger?.Info("TestExecution", $"Spawn en ({spawnX},{spawnY})");
-            }
-            catch (Exception exSpawn)
-            {
-                _appLogger?.Error("TestExecution", "Error durante CmdSpawn de prueba.", null, exSpawn);
-                MessageBox.Show($"Error en Spawn de prueba: {exSpawn.Message}");
+                _appLogger?.Info("Execution", "No hay código para ejecutar");
+                MessageBox.Show("No hay código en el editor para ejecutar", "Entrada Vacía",
+                              MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
-            _wallE.SetBrushColor(Color.Red);    // Usa CmdSetBrushColor
-            _wallE.SetBrushSize(1);         // Usa CmdSetBrushSize
-            _appLogger?.Info("TestExecution", "Pincel configurado a Rojo, tamaño 1.");
-
             try
             {
-                _appLogger?.Info("TestExecution", "Probando DrawLine horizontal...");
-                List<Point> puntosPintados = _wallE.DrawLine(1, 0, 5); // Usa CmdDrawLine
-                _appLogger?.Info("TestExecution", $"DrawLine horizontal completado. Puntos afectados: {puntosPintados.Count}. Wall-E ahora en: ({_wallE.X}, {_wallE.Y})");
-            }
-            catch (Exception exDraw)
-            {
-                _appLogger?.Error("TestExecution", "Error durante CmdDrawLine de prueba.", null, exDraw);
-                MessageBox.Show($"Error en DrawLine de prueba: {exDraw.Message}");
-            }
-            MessageBox.Show("Prueba de DrawLine ejecutada. Revisa el canvas y los logs.", "Prueba Manual", MessageBoxButtons.OK, MessageBoxIcon.Information);
-        }
+                _appLogger?.Info("Execution", "--- Iniciando ejecución ---");
 
-        /*  string source = richTextBox1.Text;
+                // 2. Limpiar el canvas y resetear estado
+                _wallE.ClearCanvasToWhite();
 
-
-          // 1. Validar si hay código para procesar
-          if (string.IsNullOrWhiteSpace(source))
-          {
-              _appLogger?.Info("Interpreter", "No hay código para ejecutar.");
-              MessageBox.Show("No hay código en el editor para ejecutar.",
-                              "Entrada Vacía",
-                              MessageBoxButtons.OK,
-                              MessageBoxIcon.Information);
-              return;
-          }
-
-          // Loguear el inicio del proceso y el código fuente
-          _appLogger?.Info("ExecutionEngine", "--- Iniciando Procesamiento de Código ---");
-          _appLogger?.Debug("ExecutionEngine", "Código Fuente Recibido:\n" + source);
-
-          // 2. Fase de Lexer (Tokenización)
-          _appLogger?.Info("Lexer", "Iniciando fase de tokenización...");
-          Lexer lexer = new Lexer(source, _appLogger); // Pasa el código y el logger
-          List<Token> tokens; // Usar tu clase Token (o Tokens si la llamaste así)
-
-          try
-          {
-              tokens = lexer.ScanTokens(); // El método ScanTokens ya loguea su progreso interno
-          }
-          catch (Exception ex)
-          {
-              _appLogger?.Error("Lexer", "Excepción crítica durante el escaneo de tokens.", null, ex);
-              MessageBox.Show($"Error fatal en el Lexer: {ex.Message}\n\nConsulte los logs para más detalles.",
-                              "Error Crítico del Lexer",
-                              MessageBoxButtons.OK,
-                              MessageBoxIcon.Error);
-              return; // Detener la ejecución si el lexer falla catastróficamente
-          }
-
-          _appLogger?.Info("Lexer", $"Fase de tokenización completada. Se generaron {tokens.Count} tokens (incluyendo EOF).");
-
-          // (Opcional pero MUY RECOMENDADO para depuración) Imprimir todos los tokens generados
-          if (tokens != null && tokens.Count > 0)
-          {
-              StringBuilder tokenDetails = new StringBuilder();
-              tokenDetails.AppendLine("Tokens Generados:");
-              foreach (Token token in tokens)
-              {
-                  tokenDetails.AppendLine(token.ToString()); // Asumiendo que Token.ToString() está bien formateado
-              }
-              _appLogger?.Debug("Lexer_Output", tokenDetails.ToString());
-          }
-
-          // 3. Verificar Errores del Lexer (Tokens Desconocidos)
-          bool hasLexerErrors = false;
-          if (tokens != null)
-          {
-              foreach (Token token in tokens)
-              {
-                  if (token.Type == TokenType.Unknown)
-                  {
-                      hasLexerErrors = true;
-
-                      _appLogger?.Error("Lexer", $"Token desconocido encontrado: '{token.Lexeme}' en línea {token.Line}. Detalle: {token.Literal}", token.Line);
-                  }
-              }
-          }
-          if (hasLexerErrors)
-          {
-              _appLogger?.Warn("ExecutionEngine", "Se encontraron errores durante la fase de Lexer. La ejecución podría no continuar o ser incorrecta.");
-              MessageBox.Show("Se encontraron errores durante el análisis léxico (tokenización).\n" +
-                              "Revise los logs para más detalles (Ventana Resultados -> Depurar, o su TextBox de logs).",
-                              "Errores del Lexer",
-                              MessageBoxButtons.OK,
-                              MessageBoxIcon.Warning);
-          }*/
-
-
-
-        //cargar 
-        private void button2_Click(object sender, EventArgs e)
-            {
-                OpenFileDialog openFile = new OpenFileDialog();
-                openFile.Filter = "Archivos PW (*.pw)|*.pw";
-                if (openFile.ShowDialog() == DialogResult.OK)
+                // 3. Fase de Lexer (Tokenización)
+                _appLogger?.Info("Lexer", "Iniciando tokenización...");
+                Lexer lexer = new Lexer(source, _appLogger);
+                List<Token> tokens = lexer.ScanTokens();
+                _appLogger?.Debug("LEXER_OUTPUT_DETAILED", "--- Tokens del Lexer ---");
+                foreach (Token tkn in tokens)
                 {
-                    // richTextBox1.Text = File.ReadAllText(openFile.FileName);
+                    _appLogger?.Debug("LEXER_OUTPUT_DETAILED", tkn.ToString());
                 }
-            }
+                _appLogger?.Debug("LEXER_OUTPUT_DETAILED", "--- Fin Tokens del Lexer ---");
+                
 
-            // guardar 
-            private void button3_Click(object sender, EventArgs e)
-            {
-                SaveFileDialog saveFileDialog = new SaveFileDialog();
-                saveFileDialog.Filter = "Archivos PW (*.pw)|*.pw";
-                saveFileDialog.FilterIndex = 0; // Establece el filtro predeterminado   
-                saveFileDialog.RestoreDirectory = true;  // Restablece el directorio al predeterminado después de guardar
-                if (saveFileDialog.ShowDialog() == DialogResult.OK)
+                // 4. Fase de Parser
+                _appLogger?.Info("Parser", "Iniciando análisis sintáctico...");
+                Parser parser = new Parser(tokens, _appLogger);
+                List<Statement> statements = parser.ParseProgram(out List<Parser.ParseError> errors);
+
+                if (errors?.Count > 0)
+                {
+                    _appLogger?.Error("Execution", $"Errores de análisis: {errors.Count}");
+                    ShowParserErrors(errors);
+                    return;
+                }
+
+                // 5. Crear el ejecutor AST
+                var executor = new ASTExecutor(_wallE, _appLogger);
+
+                // 6. Ejecutar cada statement
+                _appLogger?.Info("Execution", $"Ejecutando {statements.Count} comandos...");
+                foreach (var stmt in statements)
                 {
                     try
                     {
-                        // Verifica si el archivo ya existe y pregunta al usuario si desea sobrescribirlo
-                        if (File.Exists(saveFileDialog.FileName))
-                        {
-                            DialogResult result = MessageBox.Show("El archivo ya existe. ¿Deseas sobrescribirlo?", "Confirmar Sobrescritura", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
-                            if (result == DialogResult.No)
-                            {
-                                return; // No sobrescribir, salir del método
-                            }
-                        }
-                        // Guarda el contenido del RichTextBox en el archivo seleccionado
-                        File.WriteAllText(saveFileDialog.FileName, richTextBox1.Text);
-                        MessageBox.Show("Archivo guardado correctamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        stmt.Accept(executor);
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show($"Error al guardar el archivo: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        _appLogger?.Error("Execution", $"Error ejecutando comando: {ex.Message}", null, ex);
+                        MessageBox.Show($"Error al ejecutar comando: {ex.Message}",
+                                      "Error de Ejecución", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return;
                     }
                 }
-            }
 
-            private void button4_Click(object sender, EventArgs e)
+                _appLogger?.Info("Execution", "Ejecución completada exitosamente");
+                MessageBox.Show("Programa ejecutado correctamente", "Éxito",
+                              MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
             {
-                //  InicializarCanvas((int)numTamanioCanvas.Value, (int)numTamanioCanvas.Value);
+                _appLogger?.Error("Execution", "Error fatal durante la ejecución", null, ex);
+                MessageBox.Show($"Error fatal: {ex.Message}", "Error Crítico",
+                              MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-
-            private void numTamanioCanvas_ValueChanged_1(object sender, EventArgs e)
+            finally
             {
-
+                // Forzar actualización visual
+                RenderLogicalContextToDisplayBitmap();
+                pbCanvas.Refresh();
             }
+        }
 
-            private void pbCanvas_Click(object sender, EventArgs e)
+        private void ShowParserErrors(List<Parser.ParseError> errors)
+        {
+            StringBuilder errorMsg = new StringBuilder();
+            errorMsg.AppendLine($"Se encontraron {errors.Count} errores de sintaxis:");
+
+            foreach (var error in errors)
             {
-
+                errorMsg.AppendLine($"- Línea {error.Token?.Line}: {error.Message}");
             }
+
+            MessageBox.Show(errorMsg.ToString(), "Errores de Sintaxis",
+                          MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+
+        private void btnCargar_Click(object sender, EventArgs e)
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.Filter = "Archivos Wall-E (*.pw)|*.pw|Archivos de texto (*.txt)|*.txt|Todos los archivos (*.*)|*.*";
+            openFileDialog.Title = "Seleccionar archivo para cargar";
+
+            if (openFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                try
+                {
+                    string contenido = File.ReadAllText(openFileDialog.FileName);
+                    richTextBox1.Text = contenido;
+                    _appLogger?.Info("IO", $"Archivo cargado correctamente: {openFileDialog.FileName}");
+                }
+                catch (Exception ex)
+                {
+                    _appLogger?.Error("IO", $"Error al cargar el archivo: {ex.Message}", null, ex);
+                    MessageBox.Show($"Error al cargar el archivo: {ex.Message}", "Error",
+                                  MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        private void btnGuardar_Click(object sender, EventArgs e)
+        {
+            SaveFileDialog saveFileDialog = new SaveFileDialog();
+            saveFileDialog.Filter = "Archivos Wall-E (*.pw)|*.pw|Archivos de texto (*.txt)|*.txt|Todos los archivos (*.*)|*.*";
+            saveFileDialog.Title = "Guardar archivo";
+            saveFileDialog.DefaultExt = "pw";
+
+            if (saveFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                try
+                {
+                    File.WriteAllText(saveFileDialog.FileName, richTextBox1.Text);
+                    _appLogger?.Info("IO", $"Archivo guardado correctamente: {saveFileDialog.FileName}");
+                    MessageBox.Show("Archivo guardado correctamente.", "Éxito",
+                                  MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                catch (Exception ex)
+                {
+                    _appLogger?.Error("IO", $"Error al guardar el archivo: {ex.Message}", null, ex);
+                    MessageBox.Show($"Error al guardar el archivo: {ex.Message}", "Error",
+                                  MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        private void btnLimpiar_Click(object sender, EventArgs e)
+        {
+            richTextBox1.Clear();
+            _appLogger?.Info("UI", "Editor de código limpiado");
+        }
+
+        private void btnRedimensionar_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                int newSize = int.Parse(textCanvasSize.Text);
+                if (newSize < 10 || newSize > 100)
+                {
+                    MessageBox.Show("El tamaño debe estar entre 10 y 100", "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                _wallE.ResizeCanvas(newSize, newSize);
+                RenderLogicalContextToDisplayBitmap();
+                _appLogger?.Info("UI", $"Canvas redimensionado a {newSize}x{newSize}");
+            }
+            catch (FormatException)
+            {
+                MessageBox.Show("Por favor ingrese un número válido", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al redimensionar: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                _appLogger?.Error("UI", $"Error al redimensionar canvas: {ex.Message}");
+            }
+        }
 
     }
-    
-    } 
+} 
+ 
+
+

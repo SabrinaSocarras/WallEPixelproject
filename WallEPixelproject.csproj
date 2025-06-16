@@ -47,6 +47,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AST\ASTExecutor.cs" />
+    <Compile Include="AST\Statements.cs" />
+    <Compile Include="AST\Expressions.cs" />
     <Compile Include="Lexer.cs" />
     <Compile Include="TextBoxLogger.cs" />
     <Compile Include="Interfaces\ILogger.cs" />
@@ -97,6 +100,17 @@
   <ItemGroup>
     <None Include="Resources\freepik__a-digital-painting-of-walle-as-a-street-artist-in-__733661.jpeg" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <None Include="Resources\walle.icon.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\walleicon.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\png-clipart-wall-e-eve-film-pixar-wall-e-miscellaneous-cartoon-thumbnail.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\walle.icon.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

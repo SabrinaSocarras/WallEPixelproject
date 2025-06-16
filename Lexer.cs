@@ -41,12 +41,12 @@ namespace WallEPixelproject
             { "IsCanvasColor", TokenType.IsCanvasColor },
             };
 
-      //  public Lexer(string source, ILogger logger = null)
-       // {
-        //    this.logger = logger;
-         //   this.source = source;
+        public Lexer(string source, ILogger logger = null)
+        {
+           this.logger = logger;
+           this.source = source;
 
-        //}
+        }
 
         public bool IsAtEnd()
         {
@@ -84,12 +84,15 @@ namespace WallEPixelproject
                 case ']': AddToken(TokenType.RightBracket); break;
                 case ',': AddToken(TokenType.Comma); break;
                 case '+': AddToken(TokenType.Plus); break;
-                case '%': AddToken(TokenType.Modulo); break;
+                case '%': AddToken(TokenType.Module); break;
                 case '-': AddToken(TokenType.Minus); break; // Parser decide unario/binario
                 case '<':
-                    if (Match('-')) AddToken(TokenType.Assign);
-                    else if (Match('=')) AddToken(TokenType.LessEquals);
-                    else AddToken(TokenType.LessThan);
+                    if (Match('-'))
+                        AddToken(TokenType.Assign); // Reconocer '<-' como operador de asignación
+                    else if (Match('='))
+                        AddToken(TokenType.LessEquals);
+                    else
+                        AddToken(TokenType.LessThan);
                     break;
                 case '=':
                     if (Match('=')) AddToken(TokenType.EqualsEquals);
@@ -103,10 +106,6 @@ namespace WallEPixelproject
                     if (Match('*')) AddToken(TokenType.Power);
                     else AddToken(TokenType.Multiply);
                     break;
-                case '/':
-                    if (Match('/')) { while (Peek() != '\n' && !IsAtEnd()) Advance(); }
-                    else AddToken(TokenType.Divide);
-                    break;
                 case '&':
                     if (Match('&')) AddToken(TokenType.And);
                     else ReportLexerError($"Se esperaba '&' para formar '&&'.", start, 1);
@@ -117,11 +116,6 @@ namespace WallEPixelproject
                     break;
                 case '"': HandleStringLiteral(); break;
                 case ' ': case '\r': case '\t': break; // Ignorar whitespace
-                case '\n':
-                  //  AddToken(TokenType.NewLine);
-                    line++;
-                   // _currentColumn = 1; // Resetear columna para la nueva línea
-                    break;
                 default:
                     if (IsDigit(c)) HandleNumberLiteral();
                     else if (IsAlphaForIdentifierStart(c)) HandleIdentifierOrKeyword();
@@ -179,14 +173,13 @@ namespace WallEPixelproject
                 return;
             }
 
-            Advance(); // Consumir la comilla de cierre '"'
+            Advance(); 
             string value = source.Substring(start + 1, current - start - 2);
             AddToken(TokenType.StringLiteral, value);
         }
 
         private void HandleNumberLiteral()
         {
-            // _startOfLexeme está en el primer dígito.
             while (IsDigit(Peek())) Advance();
 
             string numberText = source.Substring(start, current - start);
@@ -202,11 +195,17 @@ namespace WallEPixelproject
 
         private void HandleIdentifierOrKeyword()
         {
-            // _startOfLexeme está en el primer carácter válido.
-            while (IsAlphaNumericDashOrUnderscoreForIdentifier(Peek())) Advance();
+            while (IsAlphaNumericDashOrUnderscoreForIdentifier(Peek()))
+                Advance();
 
             string text = source.Substring(start, current - start);
-            if (Keywords.TryGetValue(text, out TokenType keywordType))
+
+            if (Peek() == ':')
+            {
+                Advance();
+                AddToken(TokenType.Label, text.Trim());
+            }
+            else if (Keywords.TryGetValue(text, out TokenType keywordType))
             {
                 AddToken(keywordType);
             }
@@ -235,17 +234,7 @@ namespace WallEPixelproject
             string offendingText = source.Substring(errorStartIndex, Math.Min(errorLength, source.Length - errorStartIndex));
             //logger.Error(LOG_PREFIX, $"{message} (Texto: '{offendingText}')", lineToReport);
             //tokens.Add(new Token(TokenType.Unknown, offendingText, message, lineToReport, columnToReport));
-            // No actualizamos _currentColumn aquí para el token Unknown, ya que AddToken lo hará
-            // o el siguiente ScanNextToken lo recalculará.
-        }
-
-        // Clase DummyLogger interna para evitar NullReferenceException si no se pasa logger
-        private class DummyLogger : ILogger
-        {
-            public void Info(string prefix, string message, int? line = null) { }
-            public void Debug(string prefix, string message, int? line = null) { }
-            public void Warn(string prefix, string message, int? line = null) { }
-            public void Error(string prefix, string message, int? line = null, Exception ex = null) { }
+ 
         }
 
 

@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using WallEPixelproject.Interfaces;
 
 namespace WallEPixelproject
 {
@@ -14,7 +15,7 @@ namespace WallEPixelproject
         public Color BrushColor { get; set; } = Color.Black;
         public int BrushPixelSize { get; set; } = 1;
 
-
+        ILogger DummyLogger; 
         public int CanvasWidth { get; private set; }
         public int CanvasHeight {  get; private set; }
 
@@ -23,14 +24,14 @@ namespace WallEPixelproject
 
         public event EventHandler CanvasUpdated;
 
-        public WallE(int initialCanvasWidth, int initialCanvasHeight)
+        public WallE(int initialCanvasWidth, int initialCanvasHeight, ILogger logger = null)
         {
+
             X = 0;
             Y = 0;
-            BrushColor = Color.White;
+           
             BrushPixelSize = 1;
 
-            // Establecer dimensiones mínimas si las iniciales son inválidas
             int validInitialWidth = Math.Max(1, initialCanvasWidth);
             int validInitialHeight = Math.Max(1, initialCanvasHeight);
 
@@ -40,28 +41,23 @@ namespace WallEPixelproject
         public void ResizeCanvas(int newWidth, int newHeight)
         {
             if (newWidth <= 0 || newHeight <= 0)
-            {
-
-
-                return;
-            }
+                throw new ArgumentException("El tamaño del canvas debe ser positivo");
 
             CanvasWidth = newWidth;
             CanvasHeight = newHeight;
-
             logicalPixelGrid = new Color[CanvasWidth, CanvasHeight];
-
             ClearCanvasToWhite();
 
+            X = Math.Min(X, CanvasWidth - 1);
+            Y = Math.Min(Y, CanvasHeight - 1);
 
             OnCanvasUpdated();
-
         }
 
 
         public void ClearCanvasToWhite()
         {
-            // _logger.Debug("Limpiando canvas a blanco.");
+            
             for (int x = 0; x < CanvasWidth; x++)
             {
                 for (int y = 0; y < CanvasHeight; y++)
@@ -76,19 +72,18 @@ namespace WallEPixelproject
         {
             if (x < 0 || x >= CanvasWidth || y < 0 || y >= CanvasHeight)
             {
-                // _logger.Error($"CmdSpawn: Coordenadas ({x},{y}) fuera del canvas ({CanvasWidth}x{CanvasHeight}).");
-                //     throw new RuntimeError(null, $"Spawn: Coordenadas ({x},{y}) fuera de los límites del canvas [{CanvasWidth - 1},{CanvasHeight - 1}].");
+             
             }
             X = x;
             Y = y;
-            // _logger.Info($"CmdSpawn: Wall-E posicionado en ({WallEX},{WallEY}).");
+           
         }
 
 
-        public void SetBrushColor(Color newColor)
+        public void SetBrushColor(Color colorToPaint)
         {
-            this.BrushColor = newColor;
-            // _logger.Info($"CmdSetBrushColor: Color del pincel cambiado a {BrushColor}.");
+            this.BrushColor = colorToPaint;
+          
         }
 
         public void SetBrushSize(int newPixelSize)
@@ -96,7 +91,7 @@ namespace WallEPixelproject
             if (newPixelSize <= 0) newPixelSize = 1;
             BrushPixelSize = (newPixelSize % 2 == 0) ? newPixelSize - 1 : newPixelSize;
             if (BrushPixelSize <= 0) BrushPixelSize = 1;
-            // _logger.Info($"CmdSetBrushSize: Tamaño del pincel cambiado a {BrushPixelSize}.");
+             
         }
 
 
@@ -116,13 +111,13 @@ namespace WallEPixelproject
                     int currentPaintX = logicalX + dx;
                     int currentPaintY = logicalY + dy;
 
-                    // Verificar si el píxel a pintar está dentro de los límites del canvas
+                    
                     if (currentPaintX >= 0 && currentPaintX < CanvasWidth &&
                         currentPaintY >= 0 && currentPaintY < CanvasHeight)
                     {
 
                         logicalPixelGrid[currentPaintX, currentPaintY] = colorToPaint;
-                        //  _logger.Debug($"  Píxel lógico ({currentPaintX},{currentPaintY}) en _logicalPixelGrid establecido a {colorToPaint}.");
+                      
                     }
                     else
                     {
@@ -135,7 +130,7 @@ namespace WallEPixelproject
         }
         public List<Point> GenerateLinePoints(int startX, int startY, int dirX, int dirY, int distance)
         {
-            //_logger.Debug($"GenerateLinePoints: desde ({startX},{startY}), dir({dirX},{dirY}), dist({distance}).");
+          
             List<Point> pointsToPaint = new List<Point>();
             if (distance <= 0) return pointsToPaint;
 
@@ -152,8 +147,8 @@ namespace WallEPixelproject
 
                 if (currentX < 0 || currentX >= CanvasWidth || currentY < 0 || currentY >= CanvasHeight)
                 {
-                  //  _logger.Warn($"  GenerateLinePoints: Punto ({currentX},{currentY}) fuera del canvas. Línea truncada.");
-                    break; // Detener si se sale del canvas
+                  
+                    break; 
                 }
                 pointsToPaint.Add(new Point(currentX, currentY));
             }
@@ -169,42 +164,39 @@ namespace WallEPixelproject
             foreach (Point p in points)
             {
                 PaintPixel(p.X, p.Y, BrushColor);
-                finalX = p.X; // El último punto pintado es donde termina Wall-E
+                finalX = p.X; 
                 finalY = p.Y;
             }
 
-            if (points.Any()) // Solo mover si se pintó algo
+            if (points.Any())
             {
                 X = finalX;
                 Y = finalY;
-              //  _logger.Info($"CmdDrawLine: Wall-E movido a ({WallEX},{WallEY}).");
             }
-            OnCanvasUpdated(); // Notificar a la UI después de que la línea completa se "pinta" en la matriz
-            return points; // Retornar los puntos para posible animación en el intérprete
+            OnCanvasUpdated(); 
+            return points; 
         }
 
 
         public List<Point> DrawRectangle(int dirXToCenter, int dirYToCenter, int distanceToCenter, int width, int height)
         {
-           // _logger.Info($"DrawRectangle: dir({dirXToCenter},{dirYToCenter}), dist({distanceToCenter}), w({width}), h({height}). Desde ({WallEX}, {WallEY})");
+           
             List<Point> rectangleEdgePoints = new List<Point>();
             if (width <= 0 || height <= 0)
             {
-             //   _logger.Warn("DrawRectangle: Ancho o alto inválido, no se dibuja nada.");
+          
                 OnCanvasUpdated();
                 return rectangleEdgePoints;
             }
 
-            // Calcular el centro del rectángulo
             int centerX = X + dirXToCenter * distanceToCenter;
             int centerY = Y + dirYToCenter * distanceToCenter;
 
-            // Calcular coordenadas de las esquinas
             int halfWidth = width / 2;
             int halfHeight = height / 2;
             int x1 = centerX - halfWidth;
             int y1 = centerY - halfHeight;
-            int x2 = centerX + halfWidth - (width % 2 == 0 ? 1 : 0); // Ajustar si es par para que el ancho sea exacto
+            int x2 = centerX + halfWidth - (width % 2 == 0 ? 1 : 0); 
             int y2 = centerY + halfHeight - (height % 2 == 0 ? 1 : 0);
 
 
@@ -232,28 +224,122 @@ namespace WallEPixelproject
             {
                 X = finalWallEX;
                 Y = finalWallEY;
-                //_logger.Info($"CmdDrawRectangle: Wall-E movido al centro ({WallEX},{WallEY}).");
             }
 
             OnCanvasUpdated();
             return rectangleEdgePoints;
         }
+
+        public void Fill()
+        {
+            if (X < 0 || X >= CanvasWidth || Y < 0 || Y >= CanvasHeight)
+                return;
+
+            Color targetColor = logicalPixelGrid[X, Y];
+            if (targetColor == BrushColor)
+                return; 
+
+            Queue<Point> queue = new Queue<Point>();
+            queue.Enqueue(new Point(X, Y));
+
+            while (queue.Count > 0)
+            {
+                Point p = queue.Dequeue();
+                int x = p.X;
+                int y = p.Y;
+
+                if (x < 0 || x >= CanvasWidth || y < 0 || y >= CanvasHeight)
+                    continue;
+
+                if (logicalPixelGrid[x, y] != targetColor)
+                    continue;
+
+                PaintPixel(x, y, BrushColor);
+
+             
+                queue.Enqueue(new Point(x + 1, y));
+                queue.Enqueue(new Point(x - 1, y));
+                queue.Enqueue(new Point(x, y + 1));
+                queue.Enqueue(new Point(x, y - 1));
+            }
+
+            OnCanvasUpdated();
+        }
+
+        public List<Point> DrawCircle(int dirX, int dirY, int radius)
+        {
+            List<Point> circlePoints = new List<Point>();
+
+            if (radius <= 0)
+            {
+                OnCanvasUpdated();
+                return circlePoints;
+            }
+
+            // Calcular el centro del círculo
+            int centerX = X + dirX * radius;
+            int centerY = Y + dirY * radius;
+
+            // Algoritmo del círculo de Bresenham
+            int x = 0;
+            int y = radius;
+            int d = 3 - 2 * radius;
+
+            // Pintar los 8 octantes del círculo
+            while (x <= y)
+            {
+                AddCirclePoints(centerX, centerY, x, y, circlePoints);
+
+                if (d < 0)
+                {
+                    d = d + 4 * x + 6;
+                }
+                else
+                {
+                    d = d + 4 * (x - y) + 10;
+                    y--;
+                }
+                x++;
+            }
+
+            foreach (Point p in circlePoints.Distinct())
+            {
+                PaintPixel(p.X, p.Y, BrushColor);
+            }
+
+            // Mover Wall-E al centro del círculo
+            X = Math.Max(0, Math.Min(CanvasWidth - 1, centerX));
+            Y = Math.Max(0, Math.Min(CanvasHeight - 1, centerY));
+
+            OnCanvasUpdated();
+            return circlePoints;
+        }
+
+        private void AddCirclePoints(int centerX, int centerY, int x, int y, List<Point> points)
+        {
+            points.Add(new Point(centerX + x, centerY + y));
+            points.Add(new Point(centerX - x, centerY + y));
+            points.Add(new Point(centerX + x, centerY - y));
+            points.Add(new Point(centerX - x, centerY - y));
+            points.Add(new Point(centerX + y, centerY + x));
+            points.Add(new Point(centerX - y, centerY + x));
+            points.Add(new Point(centerX + y, centerY - x));
+            points.Add(new Point(centerX - y, centerY - x));
+        }
+
         protected virtual void OnCanvasUpdated()
         {
-           // _logger.Debug("OnCanvasUpdated invocado.");
             CanvasUpdated?.Invoke(this, EventArgs.Empty);
         }
 
-        // --- Acceso a la Matriz para la UI (solo lectura) ---
+       
         public Color GetPixelColorForUI(int logicalX, int logicalY)
         {
             if (logicalX < 0 || logicalX >= CanvasWidth || logicalY < 0 || logicalY >= CanvasHeight)
             {
-                return Color.Magenta; // Color para fuera de los límites visibles en UI
+                return Color.Magenta; 
             }
             return logicalPixelGrid[logicalX, logicalY];
-        }
-
-       
+        } 
     }
 }

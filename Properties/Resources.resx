@@ -124,4 +124,7 @@
   <data name="freepik__a-digital-painting-of-walle-as-a-street-artist-in-__733661" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\freepik__a-digital-painting-of-walle-as-a-street-artist-in-__733661.jpeg;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="walle_icon" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\walle.icon.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
 </root>

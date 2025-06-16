@@ -23,7 +23,7 @@ namespace WallEPixelproject
             return $"[{level}] [{prefix}]{lineInfo}: {message}";
         }
 
-        private void AppendToTextBox(string formattedMessageWithLevelAndPrefix)
+      /*  private void AppendToTextBox(string formattedMessageWithLevelAndPrefix)
         {
             string textToAppend = $"{DateTime.Now:HH:mm:ss.fff} {formattedMessageWithLevelAndPrefix}{Environment.NewLine}";
             if (_logTextBox.InvokeRequired)
@@ -40,23 +40,23 @@ namespace WallEPixelproject
                 _logTextBox.ScrollToCaret();
             }
         }
-
+      */
 
         public void Info(string prefix, string message, int? line = null)
         {
-            AppendToTextBox(FormatMessage("INFO", prefix, message, line));
+     //       AppendToTextBox(FormatMessage("INFO", prefix, message, line));
         }
 
         public void Debug(string prefix, string message, int? line = null)
         {
 #if DEBUG
-            AppendToTextBox(FormatMessage("DEBUG", prefix, message, line));
+           // AppendToTextBox(FormatMessage("DEBUG", prefix, message, line));
 #endif
         }
 
         public void Warn(string prefix, string message, int? line = null)
         {
-            AppendToTextBox(FormatMessage("WARN", prefix, message, line));
+          //  AppendToTextBox(FormatMessage("WARN", prefix, message, line));
         }
 
         public void Error(string prefix, string message, int? line = null, Exception ex = null)
@@ -70,7 +70,7 @@ namespace WallEPixelproject
                     baseMsg += $"{Environment.NewLine}    StackTrace: {ex.StackTrace.Split(new[] { Environment.NewLine }, StringSplitOptions.None).FirstOrDefault()}";
 #endif
             }
-            AppendToTextBox(baseMsg);
+          //  AppendToTextBox(baseMsg);
         }
     }
 }

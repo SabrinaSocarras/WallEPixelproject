@@ -33,6 +33,7 @@ namespace WallEPixelproject
         //Saltos y etiquetas
         GoTo,
         Identifier,
+        Label,
 
         //Literales 
         IntegerLiteral,
@@ -43,8 +44,8 @@ namespace WallEPixelproject
         Minus,
         Multiply,
         Divide,
-        Power,
-        Modulo,
+        TwoStar,
+        Module,
 
         //comparadores logicos 
         EqualsEquals,   // ==
@@ -55,6 +56,8 @@ namespace WallEPixelproject
         NotEquals,      // !=
         And,   // &&
         Or,    // ||
+        Power , 
+
 
        // puntuacion 
         LeftParen,   // (
@@ -64,11 +67,14 @@ namespace WallEPixelproject
         Comma,       // ,
         Semicolon,   // ;
         Dot,         // .
+        Split,       // /  
      
-        // final de la linea 
+        // otros
         EOF,
-
+        NewLine,
         Unknown, 
+        Whitespace,
+
 
 
 
