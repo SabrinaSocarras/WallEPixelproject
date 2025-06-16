@@ -24,7 +24,7 @@ namespace WallEPixelproject
         public Parser(List<Token> tokens, ILogger logger = null)
         {
 
-            _tokens = tokens.Where(t => t.Type != TokenType.Unknown).ToList(); // Ignorar tokens desconocidos del lexer
+            _tokens = tokens.Where(t => t.Type != TokenType.Unknown).ToList(); 
             _logger = logger ?? new DummyLogger();
         }
 
@@ -376,7 +376,7 @@ namespace WallEPixelproject
 
         private Expression ParseUnary()
         {
-            if (Match(TokenType.Minus /*, TokenType.Not */)) // Si tuvieras Not para booleanos
+            if (Match(TokenType.Minus /*, TokenType.Not */)) 
             {
                 Token operatorToken = Previous();
                 Expression right = ParseUnary(); 
@@ -426,7 +426,6 @@ namespace WallEPixelproject
 
         private CallExpr ParseCallExpression(Token customFunctionToken = null)
         {
-            // Usar el token de función predefinida o el proporcionado
             Token calleeNameToken = customFunctionToken ?? Advance();
 
             Consume(TokenType.LeftParen, "Se esperaba '(' después del nombre de función.");
@@ -449,9 +448,6 @@ namespace WallEPixelproject
             if (Match(TokenType.IntegerLiteral)) return new LiteralExpr(Previous().Literal, Previous());
             if (Match(TokenType.StringLiteral)) return new LiteralExpr(Previous().Literal, Previous());
 
-            // Si tienes literales booleanos true/false como keywords
-            // if (Match(TokenType.True)) return new LiteralExpr(true, Previous());
-            // if (Match(TokenType.False)) return new LiteralExpr(false, Previous());
 
             if (Match(TokenType.Identifier))
             {
